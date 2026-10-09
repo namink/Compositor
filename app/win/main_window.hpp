@@ -145,6 +145,8 @@ private:
     void new_adjustment_layer(const QString& kind);
     void auto_levels(int mode);
     void filter_layer(const QString& kind);
+    /// Re-run the last destructive filter on the active layer with its settings, as Photoshop's ⌘F.
+    void last_filter();
     void camera_raw_color();
     void edit_adjustment();
     void canvas_size_menu();
@@ -232,6 +234,8 @@ private:
     void load_tool_defaults();
     void save_tool_defaults();
 
+    nlohmann::json last_filter_;
+    bool has_last_filter_ = false;
     bool populating_layers_ = false;
     bool populating_history_ = false;
     bool reordering_layers_ = false;

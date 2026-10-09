@@ -218,6 +218,9 @@ void MainWindow::build_menus() {
     }
 
     QMenu* filter = menuBar()->addMenu(QStringLiteral("Fi&lter"));
+    QAction* last_filter_action = filter->addAction(QStringLiteral("&Last Filter"));
+    connect(last_filter_action, &QAction::triggered, this, [this] { last_filter(); });
+    filter->addSeparator();
     QAction* camera_raw_color_action = filter->addAction(QStringLiteral("Camera Raw &Color..."));
     connect(camera_raw_color_action, &QAction::triggered, this, [this] { camera_raw_color(); });
     filter->addSeparator();

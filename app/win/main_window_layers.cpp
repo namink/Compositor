@@ -215,6 +215,21 @@ void MainWindow::filter_layer(const QString& kind) {
         report(error);
         return;
     }
+    last_filter_ = value;
+    has_last_filter_ = true;
+    canvas_->updateImage(session_->image());
+}
+
+void MainWindow::last_filter() {
+    if (selected_id_.isEmpty() || !has_last_filter_) {
+        return;
+    }
+    session_->set_edit_name("Last Filter");
+    QString error;
+    if (!session_->apply_filter(selected_id_.toStdString(), last_filter_, error)) {
+        report(error);
+        return;
+    }
     canvas_->updateImage(session_->image());
 }
 
