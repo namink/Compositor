@@ -1,0 +1,57 @@
+name: Windows app
+
+on:
+  push:
+    paths:
+      - "**"
+      - ".github/workflows/windows-app.yml"
+  pull_request:
+    paths:
+      - "**"
+      - ".github/workflows/windows-app.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: windows-app-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: build and package
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt6 (prebuilt)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install aqtinstall
+          python -m aqt install-qt windows desktop 6.8.0 win64_msvc2022_64 -O C:/Qt
+
+      - name: Configure
+        shell: pwsh
+        run: >
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DCMAKE_PREFIX_PATH="C:/Qt/6.8.0/msvc2022_64"
+          -DCOMP_BUILD_APP=ON -DCOMP_BUILD_TESTS=OFF
+
+      - name: Build (Release)
+        run: cmake --build build --config Release --target compositor_win
+
+      - name: Package
+        shell: pwsh
+        run: ./app/win/package.ps1 -BuildDir "$PWD/build" -QtDir "C:/Qt/6.8.0/msvc2022_64" -Version "${{ github.run_number }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Compositor-win64
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 30

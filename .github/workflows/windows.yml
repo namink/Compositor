@@ -1,0 +1,57 @@
+name: Windows
+
+on:
+  push:
+    paths:
+      - "**"
+      - ".github/workflows/windows.yml"
+  pull_request:
+    paths:
+      - "**"
+      - ".github/workflows/windows.yml"
+
+concurrency:
+  group: windows-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: build and test
+    runs-on: windows-2022
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: pip install clang-format==19.1.5
+
+      - name: Source file size lint
+        run: python tools/sizelint.py --root .
+
+      - name: Check formatting
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Recurse -File | Where-Object {
+            $_.Extension -in '.cpp', '.hpp', '.h' -and $_.FullName -notmatch 'third_party|[\\/]build[\\/]'
+          }
+          clang-format --dry-run --Werror --style=file $files.FullName
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Configure
+        shell: pwsh
+        run: >
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
