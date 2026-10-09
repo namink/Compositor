@@ -1,0 +1,3 @@
+# Portable C kernels copied verbatim from the macOS app. Do not reformat: keeping them byte-for-byte
+# identical to the originals is what makes the pixel math easy to compare.
+DisableFormat: true
