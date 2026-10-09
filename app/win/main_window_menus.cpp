@@ -200,8 +200,7 @@ void MainWindow::build_menus() {
     connect(flip_cv, &QAction::triggered, this, [this] { flip_canvas_vertical(); });
     QAction* rotate_canvas_cw_action = image->addAction(QStringLiteral("Rotate Canvas 90\u00B0 Clock&wise"));
     connect(rotate_canvas_cw_action, &QAction::triggered, this, [this] { rotate_canvas_cw(); });
-    QAction* rotate_canvas_ccw_action =
-        image->addAction(QStringLiteral("Rotate Canvas 90\u00B0 C&ounterclockwise"));
+    QAction* rotate_canvas_ccw_action = image->addAction(QStringLiteral("Rotate Canvas 90\u00B0 C&ounterclockwise"));
     connect(rotate_canvas_ccw_action, &QAction::triggered, this, [this] { rotate_canvas_ccw(); });
     image->addSeparator();
     QAction* canvas_size_action = image->addAction(QStringLiteral("Canvas Si&ze..."));

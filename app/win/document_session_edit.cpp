@@ -29,7 +29,7 @@ namespace {
 /// A placement turned a quarter turn with the canvas it sits on (`canvas_w` × `canvas_h` before the
 /// turn): the middle moves to where the turn takes it and the angle turns with it.
 [[nodiscard]] model::LayerTransform quarter_turned(model::LayerTransform transform, bool clockwise, double canvas_w,
-                                                  double canvas_h) {
+                                                   double canvas_h) {
     const double center_x = transform.center_x();
     const double center_y = transform.center_y();
     const double middle_x = clockwise ? canvas_h - center_y : center_y;

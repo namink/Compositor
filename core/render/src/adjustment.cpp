@@ -401,10 +401,9 @@ void apply_adjustment(const nlohmann::json& adjustment, RgbaSurface& canvas, dou
             // The glow is a wide, soft bloom of the lines; blurred at the full sigma for now (the macOS app blurs
             // a shrunk copy, which is the same light for a fraction of the work).
             const double sigma = spacing * 3.0 + 3.0;
-            const RgbaSurface bloom =
-                gaussian_blur(adjusted, sigma);
-            dither_glow(pixels, bloom.data(), static_cast<std::size_t>(width), static_cast<std::size_t>(height),
-                        stride, static_cast<float>(glow / 100.0 * 2.5));
+            const RgbaSurface bloom = gaussian_blur(adjusted, sigma);
+            dither_glow(pixels, bloom.data(), static_cast<std::size_t>(width), static_cast<std::size_t>(height), stride,
+                        static_cast<float>(glow / 100.0 * 2.5));
         }
     } else {
         applied = false;

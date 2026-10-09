@@ -243,8 +243,7 @@ bool prompt_scanlines(QWidget* parent, nlohmann::json& value) {
         form->addRow(label, spin);
         return spin;
     };
-    QDoubleSpinBox* spacing =
-        add_spin(QStringLiteral("Line spacing"), 2, 32, 0, "lineSpacing", 4);
+    QDoubleSpinBox* spacing = add_spin(QStringLiteral("Line spacing"), 2, 32, 0, "lineSpacing", 4);
     QDoubleSpinBox* thickness = add_spin(QStringLiteral("Thickness %"), 5, 100, 0, "thickness", 70);
     QDoubleSpinBox* glow = add_spin(QStringLiteral("Glow %"), 0, 100, 0, "glow", 0);
     QDoubleSpinBox* dots = add_spin(QStringLiteral("Dots %"), 0, 100, 0, "dots", 0);
@@ -263,8 +262,7 @@ bool prompt_scanlines(QWidget* parent, nlohmann::json& value) {
         if (!object.is_object()) {
             return fallback;
         }
-        return QColor(static_cast<int>(jnum(object, "red", 0) * 255),
-                      static_cast<int>(jnum(object, "green", 0) * 255),
+        return QColor(static_cast<int>(jnum(object, "red", 0) * 255), static_cast<int>(jnum(object, "green", 0) * 255),
                       static_cast<int>(jnum(object, "blue", 0) * 255));
     };
     dark_color = read_color(jchild(value, "dark"), QColor(0, 0, 0));
