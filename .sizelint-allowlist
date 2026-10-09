@@ -1,0 +1,9 @@
+# Paths exempt from the file-size hard limit in tools/sizelint.py.
+#
+# Vendored code, generated code and the verbatim C pixel kernels are exempt. Everything else
+# must respect the hard limit, or move to its own module. Each entry needs a reason after "|".
+#
+# Format: <fnmatch glob relative to the repo root> | <reason>
+
+third_party/* | vendored third-party source, not ours to restyle
+core/pixel/* | verbatim portable C kernels reused from the macOS app; see docs/porting plan

@@ -1,0 +1,22 @@
+# Build output
+build/
+dist/
+out/
+install/
+
+# CMake / Visual Studio per-user state
+.vs/
+CMakeUserPresets.json
+*.user
+*.user.os
+
+# vcpkg
+vcpkg_installed/
+
+# Qt build leftovers
+.qmake.stash
+*_plugin_import.cpp
+
+# Editor / OS
+.DS_Store
+Thumbs.db

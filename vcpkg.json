@@ -1,0 +1,11 @@
+{
+  "name": "compositor-cross",
+  "version-string": "0.1.0",
+  "description": "Cross-platform Compositor core and Windows client (work in progress)",
+    "dependencies": [
+        "zlib",
+        "libpng",
+        "libjpeg-turbo",
+        "libraw"
+    ]
+}
