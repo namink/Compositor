@@ -40,6 +40,8 @@ public:
     bool open(const QString& path, QString& error);
     /// A new empty project: a transparent pixel layer over a `width`×`height` canvas.
     bool create(int width, int height, QString& error);
+    /// The same, with the base layer filled to a flat color (premultiplied RGBA).
+    bool create(int width, int height, std::uint32_t background_rgba, QString& error);
     bool save(const QString& path, QString& error);
     /// Export a flattened layered Photoshop file (name, rectangle, opacity, visibility, blend mode).
     bool export_psd(const QString& path, QString& error);

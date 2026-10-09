@@ -127,6 +127,10 @@ namespace fs = std::filesystem;
 }  // namespace
 
 bool DocumentSession::create(int width, int height, QString& error) {
+    return create(width, height, 0U, error);
+}
+
+bool DocumentSession::create(int width, int height, std::uint32_t background_rgba, QString& error) {
     if (width < 1 || height < 1 || width > model::DocumentLimits::kMaxSide ||
         height > model::DocumentLimits::kMaxSide ||
         static_cast<std::int64_t>(width) * height > model::DocumentLimits::kMaxSurfacePixels) {
@@ -146,6 +150,17 @@ bool DocumentSession::create(int width, int height, QString& error) {
         layer.transform.height = height;
         layer.image_file = layer.id + ".png";
         render::RgbaSurface blank(width, height);
+        if ((background_rgba & 0xFF000000U) != 0U) {
+            const std::uint8_t r = static_cast<std::uint8_t>((background_rgba >> 24U) & 0xFFU);
+            const std::uint8_t g = static_cast<std::uint8_t>((background_rgba >> 16U) & 0xFFU);
+            const std::uint8_t b = static_cast<std::uint8_t>((background_rgba >> 8U) & 0xFFU);
+            const std::uint8_t a = static_cast<std::uint8_t>(background_rgba & 0xFFU);
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    blank.set(x, y, r, g, b, a);
+                }
+            }
+        }
         model::ImageAsset asset;
         asset.width = width;
         asset.height = height;
