@@ -243,6 +243,23 @@ void MainWindow::export_psd_menu() {
     statusBar()->showMessage(QStringLiteral("Exported %1").arg(path), 4000);
 }
 
+void MainWindow::export_pdf_menu() {
+    if (!session_->is_open()) {
+        return;
+    }
+    const QString path = QFileDialog::getSaveFileName(this, QStringLiteral("Export PDF"), QStringLiteral("export.pdf"),
+                                                      QStringLiteral("PDF (*.pdf);;All files (*)"));
+    if (path.isEmpty()) {
+        return;
+    }
+    QString error;
+    if (!session_->export_pdf(path, error)) {
+        report(error);
+        return;
+    }
+    statusBar()->showMessage(QStringLiteral("Exported %1").arg(path), 4000);
+}
+
 void MainWindow::copy_merged() {
     if (!session_->is_open()) {
         return;

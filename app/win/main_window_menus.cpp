@@ -59,6 +59,8 @@ void MainWindow::build_menus() {
     connect(export_jpeg_action, &QAction::triggered, this, [this] { export_jpeg_menu(); });
     QAction* export_psd_action = file->addAction(QStringLiteral("Export &Photoshop (PSD)..."));
     connect(export_psd_action, &QAction::triggered, this, [this] { export_psd_menu(); });
+    QAction* export_pdf_action = file->addAction(QStringLiteral("Export P&DF..."));
+    connect(export_pdf_action, &QAction::triggered, this, [this] { export_pdf_menu(); });
     file->addSeparator();
     QAction* import_action = file->addAction(QStringLiteral("&Import Image..."));
     connect(import_action, &QAction::triggered, this, [this] { import_image(); });

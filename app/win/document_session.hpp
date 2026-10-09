@@ -58,6 +58,8 @@ public:
     [[nodiscard]] const std::string& path() const { return path_; }
     bool export_png(const QString& path, QString& error);
     bool export_jpeg(const QString& path, int quality, QString& error);
+    /// Export the composited image as a one-page PDF, one document pixel to one point.
+    bool export_pdf(const QString& path, QString& error);
 
     /// Show or hide a layer and re-composite. The change is kept in memory, so a later Save writes it.
     bool set_visibility(const std::string& id, bool visible, QString& error);

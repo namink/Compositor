@@ -121,6 +121,7 @@ private:
     void redo();
     void export_jpeg_menu();
     void export_psd_menu();
+    void export_pdf_menu();
     void copy_merged();
     void copy_selection();
     void cut_selection();

@@ -1,3 +1,7 @@
+#include <QImage>
+#include <QPageSize>
+#include <QPainter>
+#include <QPdfWriter>
 #include <cmath>
 #include <cstdint>
 #include <exception>
@@ -121,6 +125,33 @@ bool DocumentSession::export_psd(const QString& path, QString& error) {
         error = QString::fromUtf8(failure.what());
         return false;
     }
+    return true;
+}
+
+bool DocumentSession::export_pdf(const QString& path, QString& error) {
+    if (flat_.empty()) {
+        error = QStringLiteral("No project is open.");
+        return false;
+    }
+    // Round-trip through the PNG encoder so premultiplied pixels reach Qt the same way they leave the
+    // compositor, transparency and all.
+    const std::vector<std::uint8_t> png = io::encode_png(flat_);
+    const QImage image = QImage::fromData(png.data(), static_cast<int>(png.size()), "PNG");
+    if (image.isNull()) {
+        error = QStringLiteral("Could not render the image for export.");
+        return false;
+    }
+    QPdfWriter writer(path);
+    writer.setResolution(72);
+    writer.setPageSize(QPageSize(QSizeF(flat_.width(), flat_.height()), QPageSize::Point));
+    writer.setPageMargins(QMarginsF(0.0, 0.0, 0.0, 0.0));
+    QPainter painter(&writer);
+    if (!painter.isActive()) {
+        error = QStringLiteral("Could not open the PDF for writing.");
+        return false;
+    }
+    painter.drawImage(QRect(0, 0, flat_.width(), flat_.height()), image);
+    painter.end();
     return true;
 }
 
