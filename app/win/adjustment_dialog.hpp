@@ -21,4 +21,8 @@ namespace compositor::appwin {
 /// holds the current settings on the way in and the edited ones on the way out. False on Cancel.
 [[nodiscard]] bool prompt_dither(QWidget* parent, nlohmann::json& value);
 
+/// Scanlines settings: the line spacing and beam, the wobble/displace/dots/split controls and the colors.
+/// `value` holds the current settings on the way in and the edited ones on the way out. False on Cancel.
+[[nodiscard]] bool prompt_scanlines(QWidget* parent, nlohmann::json& value);
+
 }  // namespace compositor::appwin

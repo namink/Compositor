@@ -191,6 +191,10 @@ void MainWindow::filter_layer(const QString& kind) {
         if (!prompt_dither(this, value)) {
             return;
         }
+    } else if (kind == QStringLiteral("Scanlines")) {
+        if (!prompt_scanlines(this, value)) {
+            return;
+        }
     } else if (kind == QStringLiteral("Curves")) {
         if (!prompt_curves(this, value)) {
             return;

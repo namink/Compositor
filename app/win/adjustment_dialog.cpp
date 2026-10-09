@@ -139,6 +139,7 @@ const std::vector<QString>& filter_kinds() {
         std::vector<QString> list = adjustment_kinds();
         list.emplace_back(QStringLiteral("Camera Raw"));
         list.emplace_back(QStringLiteral("Dither"));
+        list.emplace_back(QStringLiteral("Scanlines"));
         return list;
     }();
     return kinds;
@@ -154,8 +155,7 @@ bool prompt_dither(QWidget* parent, json& value) {
     auto* style = new QComboBox(&dialog);
     style->addItems({QStringLiteral("Atkinson"), QStringLiteral("Floyd-Steinberg"), QStringLiteral("Bayer 2"),
                      QStringLiteral("Bayer 4"), QStringLiteral("Bayer 8"), QStringLiteral("Dots"),
-                     QStringLiteral("Lines"), QStringLiteral("Diamonds"), QStringLiteral("Patterns"),
-                     QStringLiteral("Scanlines")});
+                     QStringLiteral("Lines"), QStringLiteral("Diamonds"), QStringLiteral("Patterns")});
     const QString current = QString::fromStdString(value.value("style", std::string("Atkinson")));
     if (style->findText(current) >= 0) {
         style->setCurrentText(current);
@@ -224,6 +224,101 @@ bool prompt_dither(QWidget* parent, json& value) {
     value["angleDegrees"] = angle->value();
     value["lightOnDark"] = light_on_dark->isChecked();
     value["originalColors"] = original->isChecked();
+    return true;
+}
+
+bool prompt_scanlines(QWidget* parent, nlohmann::json& value) {
+    QDialog dialog(parent);
+    dialog.setWindowTitle(QStringLiteral("Scanlines"));
+    auto* layout = new QVBoxLayout(&dialog);
+    auto* form = new QFormLayout();
+    layout->addLayout(form);
+
+    const auto add_spin = [&](const QString& label, double minimum, double maximum, int decimals, const char* key,
+                              double fallback) {
+        auto* spin = new QDoubleSpinBox(&dialog);
+        spin->setRange(minimum, maximum);
+        spin->setDecimals(decimals);
+        spin->setValue(value.value(key, fallback));
+        form->addRow(label, spin);
+        return spin;
+    };
+    QDoubleSpinBox* spacing =
+        add_spin(QStringLiteral("Line spacing"), 2, 32, 0, "lineSpacing", 4);
+    QDoubleSpinBox* thickness = add_spin(QStringLiteral("Thickness %"), 5, 100, 0, "thickness", 70);
+    QDoubleSpinBox* glow = add_spin(QStringLiteral("Glow %"), 0, 100, 0, "glow", 0);
+    QDoubleSpinBox* dots = add_spin(QStringLiteral("Dots %"), 0, 100, 0, "dots", 0);
+    QDoubleSpinBox* wobble = add_spin(QStringLiteral("Wobble px"), 0, 64, 0, "wobble", 0);
+    QDoubleSpinBox* displace = add_spin(QStringLiteral("Displace px"), -100, 100, 0, "displace", 0);
+    QDoubleSpinBox* smoothness = add_spin(QStringLiteral("Smoothness %"), 0, 100, 0, "smoothness", 50);
+    QDoubleSpinBox* threshold = add_spin(QStringLiteral("Threshold %"), 0, 100, 0, "threshold", 0);
+    QDoubleSpinBox* split = add_spin(QStringLiteral("Color split px"), 0, 16, 0, "split", 0);
+    QDoubleSpinBox* density = add_spin(QStringLiteral("Density"), -100, 100, 0, "density", 0);
+    QDoubleSpinBox* contrast = add_spin(QStringLiteral("Contrast"), -100, 100, 0, "contrast", 0);
+    QDoubleSpinBox* black_level = add_spin(QStringLiteral("Black level %"), 0, 100, 0, "blackLevel", 0);
+
+    QColor dark_color(0, 0, 0);
+    QColor light_color(255, 255, 255);
+    const auto read_color = [](const json& object, QColor fallback) {
+        if (!object.is_object()) {
+            return fallback;
+        }
+        return QColor(static_cast<int>(jnum(object, "red", 0) * 255),
+                      static_cast<int>(jnum(object, "green", 0) * 255),
+                      static_cast<int>(jnum(object, "blue", 0) * 255));
+    };
+    dark_color = read_color(jchild(value, "dark"), QColor(0, 0, 0));
+    light_color = read_color(jchild(value, "light"), QColor(255, 255, 255));
+    auto* dark_button = new QPushButton(&dialog);
+    dark_button->setStyleSheet(QStringLiteral("background-color: %1").arg(dark_color.name()));
+    auto* light_button = new QPushButton(&dialog);
+    light_button->setStyleSheet(QStringLiteral("background-color: %1").arg(light_color.name()));
+    QObject::connect(dark_button, &QPushButton::clicked, &dialog, [&] {
+        const QColor chosen = QColorDialog::getColor(dark_color, &dialog);
+        if (chosen.isValid()) {
+            dark_color = chosen;
+            dark_button->setStyleSheet(QStringLiteral("background-color: %1").arg(chosen.name()));
+        }
+    });
+    QObject::connect(light_button, &QPushButton::clicked, &dialog, [&] {
+        const QColor chosen = QColorDialog::getColor(light_color, &dialog);
+        if (chosen.isValid()) {
+            light_color = chosen;
+            light_button->setStyleSheet(QStringLiteral("background-color: %1").arg(chosen.name()));
+        }
+    });
+    form->addRow(QStringLiteral("Dark"), dark_button);
+    form->addRow(QStringLiteral("Light"), light_button);
+
+    auto* original = new QCheckBox(QStringLiteral("Original colors"), &dialog);
+    original->setChecked(value.value("originalColors", false));
+    layout->addWidget(original);
+
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    layout->addWidget(buttons);
+
+    arrange_tool_panel(dialog, 380);
+    if (dialog.exec() != QDialog::Accepted) {
+        return false;
+    }
+    value = json{{"kind", "Scanlines"},
+                 {"lineSpacing", spacing->value()},
+                 {"thickness", thickness->value()},
+                 {"glow", glow->value()},
+                 {"dots", dots->value()},
+                 {"wobble", wobble->value()},
+                 {"displace", displace->value()},
+                 {"smoothness", smoothness->value()},
+                 {"threshold", threshold->value()},
+                 {"split", split->value()},
+                 {"density", density->value()},
+                 {"contrast", contrast->value()},
+                 {"blackLevel", black_level->value()},
+                 {"originalColors", original->isChecked()},
+                 {"dark", color_json(dark_color.redF(), dark_color.greenF(), dark_color.blueF())},
+                 {"light", color_json(light_color.redF(), light_color.greenF(), light_color.blueF())}};
     return true;
 }
 

@@ -21,7 +21,10 @@ read/write) is done. Milestone **W1** is underway:
 - layer effects are ported: Stroke, Drop Shadow, Color Overlay, Inner Shadow, Outer Glow and Inner
   Glow, rendered on a padded copy of the layer (grown transform) with the macOS app's morphology,
   coverage and clamped-mask blur. A layer's linked mask shapes the effects; the GPU effects path and
-  the result cache are not ported (the CPU path recomputes each frame).
+  the result cache are not ported (the CPU path recomputes each frame);
+- the Camera Raw tone and color-noise kernels match the macOS app: Shadows and Highlights use the same
+  tone bump that keeps tones in order, and color noise is smoothed over each pixel's brightness rather
+  than its saturation.
 
 Milestone **W2** has started: a Qt6 Widgets desktop client under `app/win` that opens a `.comp`,
 composites it, shows it on a canvas (zoom with Ctrl+wheel, drag to pan, View > Fit/Actual), lists
@@ -37,7 +40,9 @@ back to the `.comp` on save, with a snapshot-based Undo/Redo. It imports PNG/JPE
 a new document), imports 8-bit RGB Photoshop files (layers, folders, masks, blend modes) as a new
 document, and exports PNG or JPEG (Copy Merged to the clipboard). Adjustment layers can be created
 and edited (New Adjustment Layer / Adjustment Properties), the Filter menu bakes filters into a
-layer, Layer Mask and clipping-mask actions are wired up, and Image menu has Canvas Size, Image Size
+layer — among them Dither and Scanlines, a CRT look with line spacing, a beam thickness, wobble,
+displacement into the picture's own shapes, dots, a color split and a phosphor glow — Layer Mask and
+clipping-mask actions are wired up, and Image menu has Canvas Size, Image Size
 and Trim, and View has a layout Grid and alignment Guides (drawn as overlays; a layer being moved
 snaps to guides, the grid, the canvas edges and the other layers). A Crop tool drags a rectangle to
 crop to. A linear Gradient

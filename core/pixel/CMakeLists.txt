@@ -13,6 +13,7 @@ add_library(compositor_pixel STATIC
     HealPixels.c
     ContentFill.c
     DitherPixels.c
+    ScanlinesPixels.c
 )
 
 target_include_directories(compositor_pixel

@@ -254,4 +254,36 @@ TEST(AdjustmentTest, CameraRawSubmodulesRunAndKeepSize) {
     EXPECT_EQ(canvas.height(), 16);
 }
 
+TEST(AdjustmentTest, ScanlinesDrawLinesAndKeepAlpha) {
+    RgbaSurface canvas(24, 24);
+    for (int y = 0; y < 24; ++y) {
+        for (int x = 0; x < 24; ++x) {
+            canvas.set(x, y, 180, 180, 180, 255);
+        }
+    }
+    canvas.set(0, 0, 0, 0, 0, 0);
+    const json adjustment = {{"kind", "Scanlines"}, {"lineSpacing", 4.0}};
+    apply_adjustment(adjustment, canvas, 1.0, nullptr);
+    EXPECT_EQ(canvas.width(), 24);
+    EXPECT_EQ(canvas.height(), 24);
+    const std::uint8_t* pixels = canvas.data();
+    expect_pixel(canvas, 0, 0, 0, 0);  // A transparent pixel is left alone.
+    // Every opaque pixel keeps its alpha, and the lines make the picture vary rather than stay flat.
+    const std::uint8_t baseline = pixels[canvas.offset(1, 0)];
+    bool varied = false;
+    for (int y = 0; y < 24; ++y) {
+        for (int x = 0; x < 24; ++x) {
+            if (x == 0 && y == 0) {
+                continue;
+            }
+            const std::size_t at = canvas.offset(x, y);
+            EXPECT_EQ(static_cast<int>(pixels[at + 3U]), 255);
+            if (pixels[at] != baseline) {
+                varied = true;
+            }
+        }
+    }
+    EXPECT_TRUE(varied);
+}
+
 }  // namespace

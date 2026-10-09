@@ -14,6 +14,7 @@ extern "C" {
 #include "DitherPixels.h"
 #include "LevelsPixels.h"
 #include "NoisePixels.h"
+#include "ScanlinesPixels.h"
 }
 
 #include "adjustment_internal.hpp"
@@ -86,9 +87,6 @@ struct LevelRange {
     }
     if (name == "Glyphs") {
         return DITHER_GLYPHS;
-    }
-    if (name == "Scanlines") {
-        return DITHER_SCANLINES;
     }
     return DITHER_ATKINSON;
 }
@@ -365,8 +363,6 @@ void apply_adjustment(const nlohmann::json& adjustment, RgbaSurface& canvas, dou
         params.angle = static_cast<float>(number_or(adjustment, "angleDegrees", 45.0) * 3.14159265358979323846 / 180.0);
         params.lightOnDark = bool_or(adjustment, "lightOnDark", false) ? 1 : 0;
         params.originalColors = bool_or(adjustment, "originalColors", false) ? 1 : 0;
-        params.dots = static_cast<float>(number_or(adjustment, "dots", 0.0));
-        params.wobble = static_cast<float>(number_or(adjustment, "wobble", 0.0));
         params.dark[0] = static_cast<std::uint8_t>(number_or(child(adjustment, "dark"), "red", 0.0));
         params.dark[1] = static_cast<std::uint8_t>(number_or(child(adjustment, "dark"), "green", 0.0));
         params.dark[2] = static_cast<std::uint8_t>(number_or(child(adjustment, "dark"), "blue", 0.0));
@@ -375,6 +371,41 @@ void apply_adjustment(const nlohmann::json& adjustment, RgbaSurface& canvas, dou
         params.light[2] = static_cast<std::uint8_t>(number_or(child(adjustment, "light"), "blue", 255.0));
         dither_apply(adjusted.data(), static_cast<std::size_t>(width), static_cast<std::size_t>(height), stride,
                      &params);
+    } else if (kind == "Scanlines") {
+        ScanlinesParams params;
+        std::memset(&params, 0, sizeof(params));
+        const double spacing = number_or(adjustment, "lineSpacing", 4.0);
+        params.spacing = static_cast<int>(std::lround(spacing));
+        params.thickness = static_cast<float>(number_or(adjustment, "thickness", 70.0) / 100.0);
+        params.dots = static_cast<float>(number_or(adjustment, "dots", 0.0) / 100.0);
+        params.wobble = static_cast<float>(number_or(adjustment, "wobble", 0.0));
+        params.displace = static_cast<float>(number_or(adjustment, "displace", 0.0));
+        params.threshold = static_cast<float>(number_or(adjustment, "threshold", 0.0) / 100.0);
+        params.split = static_cast<float>(std::lround(number_or(adjustment, "split", 0.0)));
+        params.density = static_cast<float>(number_or(adjustment, "density", 0.0) / 100.0);
+        params.contrast = static_cast<float>(number_or(adjustment, "contrast", 0.0) / 100.0);
+        params.blackLevel = static_cast<float>(number_or(adjustment, "blackLevel", 0.0) / 100.0);
+        params.smoothness = static_cast<float>(number_or(adjustment, "smoothness", 50.0) / 100.0);
+        params.originalColors = bool_or(adjustment, "originalColors", false) ? 1 : 0;
+        const Color dark = read_color(child(adjustment, "dark"), Color{0.0, 0.0, 0.0});
+        const Color light = read_color(child(adjustment, "light"), Color{1.0, 1.0, 1.0});
+        params.dark[0] = static_cast<std::uint8_t>(std::lround(dark.r * 255.0));
+        params.dark[1] = static_cast<std::uint8_t>(std::lround(dark.g * 255.0));
+        params.dark[2] = static_cast<std::uint8_t>(std::lround(dark.b * 255.0));
+        params.light[0] = static_cast<std::uint8_t>(std::lround(light.r * 255.0));
+        params.light[1] = static_cast<std::uint8_t>(std::lround(light.g * 255.0));
+        params.light[2] = static_cast<std::uint8_t>(std::lround(light.b * 255.0));
+        scanlines_apply(pixels, static_cast<std::size_t>(width), static_cast<std::size_t>(height), stride, &params);
+        const double glow = number_or(adjustment, "glow", 0.0);
+        if (glow > 0.0) {
+            // The glow is a wide, soft bloom of the lines; blurred at the full sigma for now (the macOS app blurs
+            // a shrunk copy, which is the same light for a fraction of the work).
+            const double sigma = spacing * 3.0 + 3.0;
+            const RgbaSurface bloom =
+                gaussian_blur(adjusted, sigma);
+            dither_glow(pixels, bloom.data(), static_cast<std::size_t>(width), static_cast<std::size_t>(height),
+                        stride, static_cast<float>(glow / 100.0 * 2.5));
+        }
     } else {
         applied = false;
     }
