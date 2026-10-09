@@ -214,6 +214,26 @@ void MainWindow::flip_canvas_vertical() {
     canvas_->updateImage(session_->image());
 }
 
+void MainWindow::rotate_canvas_cw() {
+    QString error;
+    if (!session_->rotate_canvas(true, error)) {
+        report(error);
+        return;
+    }
+    refresh_layers();
+    canvas_->updateImage(session_->image());
+}
+
+void MainWindow::rotate_canvas_ccw() {
+    QString error;
+    if (!session_->rotate_canvas(false, error)) {
+        report(error);
+        return;
+    }
+    refresh_layers();
+    canvas_->updateImage(session_->image());
+}
+
 void MainWindow::layer_effects() {
     if (selected_id_.isEmpty()) {
         return;

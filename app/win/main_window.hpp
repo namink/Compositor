@@ -164,6 +164,8 @@ private:
     void toggle_clipping();
     void flip_canvas_horizontal();
     void flip_canvas_vertical();
+    void rotate_canvas_cw();
+    void rotate_canvas_ccw();
     void flip_horizontal();
     void flip_vertical();
     void rotate_cw();

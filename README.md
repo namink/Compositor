@@ -35,7 +35,8 @@ edits them: a Move tool, an opacity spinner, a Brush
 polygonal Lasso and a Magic Wand, with Shift/Alt add/subtract and Select All/Deselect, Inverse, Grow,
 Shrink and Feather feeding Delete, Fill and Crop to Selection. An Eyedropper picks colors off the
 canvas. It also has New/Duplicate/Delete Layer, New Folder, Rename, Bring Forward/Send Backward,
-flip/rotate/reset transforms, Flip Canvas, and Flatten Image — all re-compositing live and written
+flip/rotate/reset transforms, Flip Canvas, Rotate Canvas 90 degrees either way (every layer, mask,
+guide and the selection turning with it), and Flatten Image — all re-compositing live and written
 back to the `.comp` on save, with a snapshot-based Undo/Redo. It imports PNG/JPEG as a new layer (or
 a new document), imports 8-bit RGB Photoshop files (layers, folders, masks, blend modes) as a new
 document, and exports PNG or JPEG (Copy Merged to the clipboard). Adjustment layers can be created

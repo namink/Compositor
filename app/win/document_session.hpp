@@ -105,6 +105,9 @@ public:
     /// Set a layer's transform wholesale (the Transform inspector): origin, size, rotation and flips.
     bool set_transform(const std::string& id, const model::LayerTransform& transform, QString& error);
     bool flip_canvas(bool horizontal, QString& error);
+    /// Turn the whole canvas a quarter turn: width and height swap, and every layer, placed mask, guide
+    /// and the selection turn with it, as one undo step. Layers are placed, not resampled.
+    bool rotate_canvas(bool clockwise, QString& error);
     bool rename_layer(const std::string& id, const QString& name, QString& error);
     /// Move a layer among its siblings: `delta` +1 brings it forward (up), -1 sends it backward.
     bool move_layer_order(const std::string& id, int delta, QString& error);

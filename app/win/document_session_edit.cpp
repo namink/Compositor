@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "compositor/io/image_codec.hpp"
@@ -22,6 +24,53 @@ namespace {
         surfaces.emplace(id, io::decode_image(asset.png));
     }
     return surfaces;
+}
+
+/// A placement turned a quarter turn with the canvas it sits on (`canvas_w` × `canvas_h` before the
+/// turn): the middle moves to where the turn takes it and the angle turns with it.
+[[nodiscard]] model::LayerTransform quarter_turned(model::LayerTransform transform, bool clockwise, double canvas_w,
+                                                  double canvas_h) {
+    const double center_x = transform.center_x();
+    const double center_y = transform.center_y();
+    const double middle_x = clockwise ? canvas_h - center_y : center_y;
+    const double middle_y = clockwise ? center_x : canvas_w - center_x;
+    transform.origin_x = middle_x - transform.width / 2.0;
+    transform.origin_y = middle_y - transform.height / 2.0;
+    transform.rotation = std::fmod(transform.rotation + (clockwise ? 90.0 : -90.0), 360.0);
+    return transform;
+}
+
+/// The selection turned with the canvas: `new(H - 1 - y, x) = old(x, y)` clockwise, the other way back.
+void quarter_turn_selection(render::Selection& selection, bool clockwise) {
+    if (selection.empty()) {
+        return;
+    }
+    const int old_width = selection.width;
+    render::Selection turned;
+    turned.width = selection.height;
+    turned.height = old_width;
+    turned.coverage.assign(static_cast<std::size_t>(turned.width) * static_cast<std::size_t>(turned.height), 0);
+    turned.min_x = turned.width;
+    turned.min_y = turned.height;
+    for (int y = 0; y < selection.height; ++y) {
+        for (int x = 0; x < old_width; ++x) {
+            const std::uint8_t coverage =
+                selection.coverage[static_cast<std::size_t>(y) * static_cast<std::size_t>(old_width) +
+                                   static_cast<std::size_t>(x)];
+            if (coverage == 0) {
+                continue;
+            }
+            const int nx = clockwise ? turned.width - 1 - y : y;
+            const int ny = clockwise ? x : turned.height - 1 - x;
+            turned.coverage[static_cast<std::size_t>(ny) * static_cast<std::size_t>(turned.width) +
+                            static_cast<std::size_t>(nx)] = coverage;
+            turned.min_x = std::min(turned.min_x, nx);
+            turned.min_y = std::min(turned.min_y, ny);
+            turned.max_x = std::max(turned.max_x, nx);
+            turned.max_y = std::max(turned.max_y, ny);
+        }
+    }
+    selection = std::move(turned);
 }
 
 [[nodiscard]] model::ProjectLayerRecord* find(model::ProjectManifest& manifest, const std::string& id) {
@@ -217,6 +266,45 @@ bool DocumentSession::flip_canvas(bool horizontal, QString& error) {
                 placement.flip_y = !placement.flip_y;
             }
         }
+    }
+    return recomposite(error);
+}
+
+bool DocumentSession::rotate_canvas(bool clockwise, QString& error) {
+    if (!snapshot_) {
+        error = QStringLiteral("No project is open.");
+        return false;
+    }
+    push_history();
+    const int old_width = snapshot_->manifest.width;
+    const int old_height = snapshot_->manifest.height;
+    const double canvas_w = static_cast<double>(old_width);
+    const double canvas_h = static_cast<double>(old_height);
+    for (model::ProjectLayerRecord& layer : snapshot_->manifest.layers) {
+        layer.transform = quarter_turned(layer.transform, clockwise, canvas_w, canvas_h);
+        if (layer.mask_placement) {
+            *layer.mask_placement = quarter_turned(*layer.mask_placement, clockwise, canvas_w, canvas_h);
+        }
+    }
+    snapshot_->manifest.width = old_height;
+    snapshot_->manifest.height = old_width;
+    if (snapshot_->manifest.guides) {
+        for (model::CanvasGuide& guide : *snapshot_->manifest.guides) {
+            if (guide.axis == model::CanvasGuide::Axis::vertical) {
+                guide.axis = model::CanvasGuide::Axis::horizontal;
+                if (!clockwise) {
+                    guide.position = canvas_w - guide.position;
+                }
+            } else {
+                guide.axis = model::CanvasGuide::Axis::vertical;
+                if (clockwise) {
+                    guide.position = canvas_h - guide.position;
+                }
+            }
+        }
+    }
+    if (selection_) {
+        quarter_turn_selection(*selection_, clockwise);
     }
     return recomposite(error);
 }
